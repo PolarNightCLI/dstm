@@ -1,0 +1,117 @@
+package main
+
+import (
+	"errors"
+	"fmt"
+	"os"
+	"os/exec"
+	"os/user"
+	"runtime"
+)
+
+func check() bool {
+
+	fmt.Println("your OS is", runtime.GOARCH, runtime.GOOS)
+
+	pwd, err := os.Getwd()
+	if err != nil {
+		fmt.Println(err)
+		return false
+	}
+	fmt.Println(pwd)
+
+	user_now, err := user.Current()
+	if err != nil {
+		fmt.Println(err)
+		return false
+	}
+	if user_now.Username == "root" {
+		fmt.Println("please don't exec it in root user")
+		return false
+	}
+
+	if _, err := exec.LookPath("wget"); err != nil {
+		fmt.Println("需要依赖：wget")
+		return false
+	}
+	if _, err := exec.LookPath("lua"); err != nil {
+		fmt.Println("需要依赖：lua")
+		return false
+	}
+
+	if !has_steamcmd() {
+		fmt.Println("需要前半本体，开始下载：")
+		if err := download_steamcmd(); err != nil {
+			fmt.Println(err)
+			return false
+		}
+
+		fmt.Println("解压：")
+		tar := exec.Command(
+			"tar", "-xvzf",
+			"Steam/steamcmd_linux.tar.gz",
+			"--directory", "Steam",
+		)
+		bash(tar)
+	}
+
+	if !has_server_bin() {
+		fmt.Println("安装下载后半本体：")
+		if err := install_server(); err != nil {
+			fmt.Println(err)
+			return false
+		}
+		if err := install_server(); err != nil {
+			fmt.Println(err)
+			return false
+		}
+	}
+
+	return true
+
+}
+
+func has_steamcmd() bool {
+	_, err1 := os.Stat("/Steam/steamcmd.sh")
+	check1 := errors.Is(err1, os.ErrNotExist)
+	_, err2 := os.Stat("/Steam/steamcmd_linux.tar.gz")
+	check2 := errors.Is(err2, os.ErrNotExist)
+	return check1 && check2
+}
+
+func download_steamcmd() error {
+	if err := os.MkdirAll("Steam", os.ModePerm); err != nil {
+		return err
+	}
+	download := exec.Command(
+		"wget", "-q", "--show-progress", "--progress=bar:force",
+		"--output-document", "Steam/steamcmd_linux.tar.gz",
+		"https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz",
+	)
+	if err := bash(download); err != nil {
+		return err
+	}
+	return nil
+}
+func has_server_bin() bool {
+	_, err := os.Stat("Server/bin/dontstarve_dedicated_server_nullrenderer")
+	return errors.Is(err, os.ErrNotExist)
+}
+
+func install_server() error {
+	if err := os.MkdirAll("Server", os.ModePerm); err != nil {
+		return err
+	}
+	install := exec.Command(
+		// ~/Steam/steamcmd.sh +force_install_dir $DST_DIR +login anonymous +app_update 343050 validate +quit
+		"bash", "Steam/steamcmd.sh",
+		"+force_install_dir", pwd+"/Server",
+		"login", "anonymous",
+		"+app_update", "343050",
+		"validate", "+quit",
+	)
+	if err := bash2(install); err != nil {
+		return err
+	}
+	return nil
+}
