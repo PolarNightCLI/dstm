@@ -68,6 +68,10 @@ func check() bool {
 		bash(tar)
 	}
 
+	if !has_ldd(pwd + "/Steam/linux32/steamcmd") {
+		return false
+	}
+
 	if !has_server_bin() {
 		fmt.Println("安装下载后半本体：")
 		if err := install_server(); err != nil {
@@ -81,7 +85,7 @@ func check() bool {
 	}
 
 	// 检查 bin 的依赖
-	if !has_ldd() {
+	if !has_ldd(pwd + ddsn) {
 		return false
 	}
 
@@ -134,9 +138,9 @@ func install_server() error {
 	return nil
 }
 
-func has_ldd() bool {
+func has_ldd(exe string) bool {
 	// fmt.Println(pwd + ddsn)
-	bin_ldd1 := exec.Command("ldd", pwd+ddsn)
+	bin_ldd1 := exec.Command("ldd", exe)
 	bin_ldd2 := exec.Command("grep", "not")
 	// bash3(bin_ldd1, bin_ldd2)
 	if err := bash3(bin_ldd1, bin_ldd2); err != nil {
