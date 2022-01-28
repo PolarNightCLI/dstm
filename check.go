@@ -9,16 +9,29 @@ import (
 	"runtime"
 )
 
+var is_64 bool
+var pwd string
+var ddsn string
+
 func check() bool {
 
 	fmt.Println("your OS is", runtime.GOARCH, runtime.GOOS)
 
-	pwd, err := os.Getwd()
-	if err != nil {
-		fmt.Println(err)
-		return false
+	switch runtime.GOARCH {
+	case "amd64":
+		is_64 = true
+		ddsn = "/Server/bin64/dontstarve_dedicated_server_nullrenderer_x64"
+	case "386":
+		is_64 = false
+		ddsn = "/Server/bin/dontstarve_dedicated_server_nullrenderer"
+	default:
+		fmt.Println("not support your arch")
+		os.Exit(1)
 	}
-	fmt.Println(pwd)
+
+	pwd, _ = os.Getwd()
+	// 这里不要 err 不然会出问题
+	// fmt.Println(pwd)
 
 	user_now, err := user.Current()
 	if err != nil {
@@ -67,6 +80,11 @@ func check() bool {
 		}
 	}
 
+	// 检查 bin 的依赖
+	if !has_ldd() {
+		return false
+	}
+
 	return true
 
 }
@@ -94,7 +112,7 @@ func download_steamcmd() error {
 	return nil
 }
 func has_server_bin() bool {
-	_, err := os.Stat("Server/bin/dontstarve_dedicated_server_nullrenderer")
+	_, err := os.Stat(ddsn)
 	return errors.Is(err, os.ErrNotExist)
 }
 
@@ -105,13 +123,26 @@ func install_server() error {
 	install := exec.Command(
 		// ~/Steam/steamcmd.sh +force_install_dir $DST_DIR +login anonymous +app_update 343050 validate +quit
 		"bash", "Steam/steamcmd.sh",
-		"+force_install_dir", pwd+"/Server",
-		"login", "anonymous",
-		"+app_update", "343050",
+		"+force_install_dir", pwd+"/Server", // 绝对路径
+		"login", "anonymous", // 匿名登录
+		"+app_update", "343050", // 343050 是饥荒在steam 中的 id
 		"validate", "+quit",
 	)
 	if err := bash2(install); err != nil {
 		return err
 	}
 	return nil
+}
+
+func has_ldd() bool {
+	// fmt.Println(pwd + ddsn)
+	bin_ldd1 := exec.Command("ldd", pwd+ddsn)
+	bin_ldd2 := exec.Command("grep", "not")
+	// bash3(bin_ldd1, bin_ldd2)
+	if err := bash3(bin_ldd1, bin_ldd2); err != nil {
+		fmt.Println(err)
+		return false
+	}
+	// 这里出现 not found 了吗？增加一个用户判断
+	return true
 }
