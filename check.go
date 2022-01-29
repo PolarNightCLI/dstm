@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"os/user"
 	"runtime"
+	"strings"
 )
 
 var is_64 bool
@@ -88,7 +89,6 @@ func check() bool {
 	if !has_ldd(pwd + ddsn) {
 		return false
 	}
-
 	return true
 
 }
@@ -139,14 +139,25 @@ func install_server() error {
 }
 
 func has_ldd(exe string) bool {
-	// fmt.Println(pwd + ddsn)
-	bin_ldd1 := exec.Command("ldd", exe)
-	bin_ldd2 := exec.Command("grep", "not")
-	// bash3(bin_ldd1, bin_ldd2)
-	if err := bash3(bin_ldd1, bin_ldd2); err != nil {
-		fmt.Println(err)
+	bin_ldd := exec.Command("ldd", exe)
+	output := strings.Fields(bash4(bin_ldd))
+	need_package := ""
+	for k, v := range output {
+		if v == "not" {
+			need_package += output[k-2]
+		}
+	}
+	if need_package != "" {
+		fmt.Println("需要安装依赖", need_package)
 		return false
 	}
+	// bin_ldd1 := exec.Command("ldd", exe)
+	// bin_ldd2 := exec.Command("grep", "not")
+	// bash3(bin_ldd1, bin_ldd2)
+	// if err := bash3(bin_ldd1, bin_ldd2); err != nil {
+	// 	fmt.Println(err)
+	// 	return false
+	// }
 	// 这里出现 not found 了吗？增加一个用户判断
 	return true
 }

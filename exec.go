@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"io"
+	"log"
 	"os"
 	"os/exec"
 )
@@ -68,4 +69,12 @@ func bash3(cmd1 *exec.Cmd, cmd2 *exec.Cmd) error {
 
 	// return errors.New(fmt.Sprint(cmd2.Stdout))
 	return nil
+}
+
+func bash4(cmd *exec.Cmd) string {
+	out, err := cmd.Output()
+	if err != nil {
+		log.Fatal(err)
+	}
+	return string(out)
 }
