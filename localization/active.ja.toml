@@ -1,0 +1,8 @@
+[_version]
+other = "バージョン"
+
+[_short_des]
+other = "ドンスタLinuxサーバ管理ツール"
+
+[_long_des]
+other = "ドンスタLinuxサーバ管理ツール\n  Github: https://github.com/qaqland/dstm"
