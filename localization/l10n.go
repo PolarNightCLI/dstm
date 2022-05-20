@@ -6,13 +6,23 @@ import (
 	"golang.org/x/text/language"
 )
 
-var Locale = language.English
+const (
+	MsgOnly      = 0
+	MsgAndCount  = 1
+	MsgAndData   = 2
+	MsgCountData = 3
+)
+
+var (
+	Locale    = language.English
+	singleton = newLocalizer()
+)
 
 type localization struct {
 	bundle *i18n.Bundle
 }
 
-func NewLocalizer() localization {
+func newLocalizer() localization {
 	// en, zh, ja
 	b := i18n.NewBundle(language.English)
 	b.RegisterUnmarshalFunc("toml", toml.Unmarshal)
@@ -23,12 +33,9 @@ func NewLocalizer() localization {
 	}
 }
 
-const (
-	MsgOnly      = 0
-	MsgAndCount  = 1
-	MsgAndData   = 2
-	MsgCountData = 3
-)
+func Singleton() *localization {
+	return &singleton
+}
 
 func (l localization) String(key string, confType int, count int, data map[string]string) string {
 	localizer := i18n.NewLocalizer(l.bundle, Locale.String())
