@@ -1,0 +1,19 @@
+[common]
+# english: en,   中文: zh,   日本語: ja
+lang = "en"
+
+[path]
+conf_dir = "${HOME}/.dstm"
+dst_root_dir = "${HOME}/Server"
+ugc_dir = "${HOME}/Server/ugc_mods"
+v1_mod_dir = "${HOME}/Server/mods"
+v2_mod_dir = "${HOME}/Server/ugc_mods/content"
+klei_root_dir = "${HOME}/Klei"
+world_dir_name = "worlds"
+
+[url]
+github_url = "https://github.com"
+gitee_url = "https://gitee.com"
+
+[color]
+main_color = "#FFF"
