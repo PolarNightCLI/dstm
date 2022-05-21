@@ -4,15 +4,15 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/qaqland/dstm/config"
-	l10n "github.com/qaqland/dstm/localization"
+	"github.com/PolarNightCLI/dstm/config"
+	"github.com/PolarNightCLI/dstm/dst"
+	l10n "github.com/PolarNightCLI/dstm/localization"
+	tea "github.com/charmbracelet/bubbletea"
 
+	"github.com/PolarNightCLI/dstm/tui"
 	"github.com/spf13/cobra"
 	"golang.org/x/text/language"
 )
-
-// tea "github.com/charmbracelet/bubbletea"
-// "github.com/qaqland/dstm/tui"
 
 const (
 	appName = "DSTM"
@@ -21,7 +21,7 @@ const (
 
 var (
 	appConf config.Config = config.LoadConfig()
-	local                 = l10n.NewLocalizer()
+	local                 = l10n.Singleton()
 )
 
 func Execute() {
@@ -36,15 +36,23 @@ func runAPP(cmd *cobra.Command, args []string) {
 		cmd.Usage()
 		os.Exit(1)
 	}
-	//p := tea.NewProgram(tui.NewTuiApp(appName, version))
-	//if err := p.Start(); err != nil {
-	//	fmt.Println(err)
-	//	os.Exit(1)
-	//}
-	fmt.Println(appConf.Common)
-	fmt.Println(appConf.Path)
-	fmt.Println(appConf.Url)
-	fmt.Println(appConf.Color)
+	dst.Main()
+	os.Exit(0)
+	p := tea.NewProgram(tui.NewTuiApp(appName, version, &appConf), tea.WithAltScreen())
+	if err := p.Start(); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+}
+
+func matchLangTag(str string) language.Tag {
+	var matcher = language.NewMatcher([]language.Tag{
+		language.English,
+		language.Chinese,
+		language.Japanese,
+	})
+	tag, _ := language.MatchStrings(matcher, str)
+	return tag
 }
 
 var rootCmd = &cobra.Command{
@@ -57,7 +65,7 @@ var rootCmd = &cobra.Command{
 }
 
 func init() {
-	l10n.Locale = language.Chinese
+	l10n.Locale = matchLangTag(appConf.Common.Lang)
 	rootCmd.Short = local.String("_short_des", l10n.MsgOnly, 0, nil)
 	rootCmd.Long = local.String("_long_des", l10n.MsgOnly, 0, nil)
 

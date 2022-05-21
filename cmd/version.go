@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	l10n "github.com/qaqland/dstm/localization"
+	l10n "github.com/PolarNightCLI/dstm/localization"
 	"github.com/spf13/cobra"
 )
 

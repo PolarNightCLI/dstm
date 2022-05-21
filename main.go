@@ -1,6 +1,6 @@
 package main
 
-import "github.com/qaqland/dstm/cmd"
+import "github.com/PolarNightCLI/dstm/cmd"
 
 func main() {
 	cmd.Execute()
