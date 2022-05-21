@@ -6,3 +6,12 @@ other = "ドンスタLinuxサーバ管理ツール"
 
 [_long_des]
 other = "ドンスタLinuxサーバ管理ツール\n  Github: https://github.com/qaqland/dstm"
+
+[_no_running_shards]
+other = "実行中のワールドがありません"
+
+[_tip01]
+other = "サーバリストに表示されない?   -->   ポートとファイアウォールの設定をチェック!"
+
+[_tip02]
+other = "ゲーム起動時に更新してた?　   -->   サーバサイドも更新しないと!"

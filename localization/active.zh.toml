@@ -6,3 +6,12 @@ other = "饥荒联机版Linux服务器管理工具"
 
 [_long_des]
 other = "饥荒联机版Linux服务器管理工具\n  Github: https://github.com/qaqland/dstm"
+
+[_no_running_shards]
+other = "没有运行中的世界"
+
+[_tip01]
+other = "服务器列表里搜索不到?   -->   检查端口和防火墙&云服的安全组设置!"
+
+[_tip02]
+other = "启动游戏时看到有更新?   -->   服务端也得更新一下!"
