@@ -1,4 +1,4 @@
-package widgets
+package tabmenu
 
 import (
 	"github.com/charmbracelet/bubbles/list"

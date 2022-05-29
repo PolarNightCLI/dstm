@@ -3,7 +3,7 @@ package tui
 import (
 
 	//"github.com/charmbracelet/bubbles/textinput"
-	"github.com/PolarNightCLI/dstm/tui/widgets"
+	widgets "github.com/PolarNightCLI/dstm/tui/widgets/form"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
