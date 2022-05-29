@@ -2,6 +2,9 @@
 # english: en,   中文: zh,   日本語: ja
 lang = "en"
 
+[cluster]
+last_token = "pds-g^KU_J9MSP3g1^JH4ANm0wvAE/nZK08fKbu3WNZsVTJzLPU/dVSQW8sDU="
+
 [path]
 conf_dir = "${HOME}/.dstm"
 dst_root_dir = "${HOME}/Server"
