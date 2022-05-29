@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/PolarNightCLI/dstm/config"
-	"github.com/PolarNightCLI/dstm/dst"
 	l10n "github.com/PolarNightCLI/dstm/localization"
 	tea "github.com/charmbracelet/bubbletea"
 
@@ -36,8 +35,10 @@ func runAPP(cmd *cobra.Command, args []string) {
 		cmd.Usage()
 		os.Exit(1)
 	}
-	dst.Main()
+
+	tui.Main()
 	os.Exit(0)
+
 	p := tea.NewProgram(tui.NewTuiApp(appName, version, &appConf), tea.WithAltScreen())
 	if err := p.Start(); err != nil {
 		fmt.Println(err)

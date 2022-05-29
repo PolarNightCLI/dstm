@@ -40,6 +40,7 @@ func (h *Header) AddNewShard(name string) {
 }
 
 func (h *Header) RefreshAll() tea.Cmd {
+	h.checkedNum = 0
 	var cmds []tea.Cmd
 	for i := range h.shards {
 		h.shards[i].Reset()
@@ -57,7 +58,7 @@ func (h Header) Init() tea.Cmd {
 }
 
 func (h Header) Update(msg tea.Msg) (Header, tea.Cmd) {
-	if len(h.shards) == 0 {
+	if len(h.shards) == 0 || len(h.shards) == h.checkedNum {
 		return h, nil
 	}
 
