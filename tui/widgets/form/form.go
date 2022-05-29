@@ -3,6 +3,7 @@ package widgets
 import (
 	"strings"
 
+	//"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -12,16 +13,23 @@ import (
 //	Init() tea.Cmd
 //	Update(msg tea.Msg) (any, tea.Cmd)
 //	View() string
-//	Focus()
-//	IsFocused() bool
+//	Focus() any
+//	UnFocus() any
 //}
 
 //type SelectorRow struct {
 //	label      string
 //	value      string
 //	showWidget bool
-//	picker     Selector
+//	//picker     Selector
 //}
+
+var (
+	normalStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("100")).PaddingRight(3)
+	selectedStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("200")).PaddingRight(3)
+	okMark        = lipgloss.NewStyle().Foreground(lipgloss.Color("46")).Render("✔ ")
+	ngMark        = lipgloss.NewStyle().Foreground(lipgloss.Color("196")).Render("✘ ")
+)
 
 type Form struct {
 	rows     []TextInputRow
@@ -53,11 +61,13 @@ func (f Form) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "enter":
 			if f.focusing {
 				f.focusing = false
-				f.rows[f.cursor].UnFocus()
+				r := f.rows[f.cursor].UnFocus()
+				f.rows[f.cursor] = r.(TextInputRow)
 				return f, nil
 			}
 			f.focusing = true
-			f.rows[f.cursor].Focus()
+			r := f.rows[f.cursor].Focus()
+			f.rows[f.cursor] = r.(TextInputRow)
 		case "up":
 			if !f.focusing {
 				f.cursor--
@@ -84,15 +94,16 @@ func (f Form) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (f Form) View() string {
-	normalStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("100")).PaddingRight(3)
-	selectedStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("200")).PaddingRight(3)
-
 	var doc strings.Builder
 
 	for i, row := range f.rows {
 		var line string
 		if f.cursor == i {
-			line = selectedStyle.Render(row.View())
+			if row.editing {
+				line = row.View()
+			} else {
+				line = selectedStyle.Render(row.View())
+			}
 		} else {
 			line = normalStyle.Render(row.View())
 		}
