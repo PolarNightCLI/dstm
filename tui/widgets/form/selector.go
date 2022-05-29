@@ -1,4 +1,4 @@
-package widgets
+package form
 
 import (
 	"fmt"
@@ -7,8 +7,20 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-func NewSelector(opts []string, allowCancel bool) Selector {
-	return Selector{options: opts, selected: map[int]struct{}{}, allowCancel: allowCancel}
+type finishSelectMsg struct{}
+
+func finishSelectCmd() tea.Msg {
+	return finishSelectMsg{}
+}
+
+func NewSelector(opts []string, allowCancel, allowMultiSelect, listVertical bool) Selector {
+	return Selector{
+		options:          opts,
+		selected:         map[int]struct{}{},
+		allowCancel:      allowCancel,
+		allowMultiSelect: allowMultiSelect,
+		listVertical:     listVertical,
+	}
 }
 
 type Selector struct {
@@ -16,7 +28,9 @@ type Selector struct {
 	selected map[int]struct{}
 	cursor   int
 
-	allowCancel bool
+	allowCancel      bool
+	allowMultiSelect bool
+	listVertical     bool
 }
 
 func (s Selector) Init() tea.Cmd {
@@ -33,51 +47,57 @@ func (s Selector) GetSelected() []string {
 	return result
 }
 
-func (s Selector) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	maxIndex := len(s.options)
+func (s Selector) scalMaxIndex() int {
+	maxIndex := len(s.options) - 1
+
 	if s.allowCancel {
-		maxIndex++
+		maxIndex += 2
+	} else {
+		maxIndex += 1
 	}
+
+	return maxIndex
+}
+
+func (s *Selector) checkOption(index int) {
+	if _, ok := s.selected[index]; ok {
+		delete(s.selected, index)
+	} else {
+		if !s.allowMultiSelect && len(s.selected) > 0 {
+			s.selected = map[int]struct{}{}
+		}
+		s.selected[index] = struct{}{}
+	}
+}
+
+func (s Selector) Update(msg tea.Msg) (Selector, tea.Cmd) {
+	maxIndex := s.scalMaxIndex()
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "q", "esc", "ctrl+c":
-			fmt.Println()
-			return s, tea.Quit
 		case "enter", " ":
 			if s.cursor == maxIndex { // ok
-				return s, tea.Quit
+				if len(s.selected) > 0 {
+					return s, finishSelectCmd
+				} else {
+					return s, nil
+				}
 			}
 			if s.allowCancel && s.cursor == maxIndex-1 { // cancel
 				s.selected = map[int]struct{}{}
 				return s, tea.Quit
 			}
-
-			if _, ok := s.selected[s.cursor]; ok {
-				delete(s.selected, s.cursor)
-			} else {
-				s.selected[s.cursor] = struct{}{}
-			}
-		case "left":
+			s.checkOption(s.cursor)
+		case "left", "up":
 			s.cursor -= 1
 			if s.cursor < 0 {
 				s.cursor = maxIndex
 			}
-		case "right":
+		case "right", "down":
 			s.cursor += 1
 			if s.cursor > maxIndex {
 				s.cursor = 0
-			}
-		case "up":
-			if s.cursor >= len(s.options) {
-				s.cursor -= len(s.options)
-			}
-		case "down":
-			if s.cursor > 0 && s.allowCancel {
-				s.cursor = len(s.options) + 1
-			} else {
-				s.cursor = len(s.options)
 			}
 		}
 	}
@@ -87,8 +107,9 @@ func (s Selector) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (s Selector) View() string {
 	normalStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("100")).PaddingRight(3)
 	selectedStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("200")).PaddingRight(3)
-	var opts []string
 
+	var opts []string
+	var optsBlock string
 	for i, opt := range s.options {
 		prefix := "  "
 		if i == s.cursor {
@@ -104,9 +125,14 @@ func (s Selector) View() string {
 		}
 		opts = append(opts, line)
 	}
-	optsBlock := lipgloss.JoinHorizontal(lipgloss.Center, opts...)
+	if s.listVertical {
+		optsBlock = lipgloss.JoinVertical(lipgloss.Center, opts...)
+	} else {
+		optsBlock = lipgloss.JoinHorizontal(lipgloss.Center, opts...)
+	}
 
 	opts = []string{}
+	var actionsBlock string
 	actions := []string{"[Cancel]", "[OK]"}
 	for i, action := range actions {
 		if !s.allowCancel && i == 0 {
@@ -124,7 +150,11 @@ func (s Selector) View() string {
 
 		opts = append(opts, item)
 	}
-	actionsBlock := lipgloss.JoinHorizontal(lipgloss.Center, opts...)
+	actionsBlock = lipgloss.JoinHorizontal(lipgloss.Center, opts...)
 
-	return lipgloss.JoinVertical(lipgloss.Center, optsBlock, actionsBlock)
+	if s.listVertical {
+		return lipgloss.JoinVertical(lipgloss.Center, optsBlock, actionsBlock)
+	} else {
+		return lipgloss.JoinHorizontal(lipgloss.Center, optsBlock, actionsBlock)
+	}
 }

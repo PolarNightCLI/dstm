@@ -1,4 +1,4 @@
-package widgets
+package form
 
 import (
 	"strings"
@@ -51,23 +51,38 @@ func (r TextInputRow) UnFocus() any {
 	return r
 }
 
+func (r TextInputRow) isEditing() bool {
+	return r.editing
+}
+
+func (r TextInputRow) Type() string {
+	return "TextInputRow"
+}
+
 func (r TextInputRow) Init() tea.Cmd {
 	return textinput.Blink
 }
 
 func (r TextInputRow) Update(msg tea.Msg) (any, tea.Cmd) {
-	if r.editing {
-		var cmd tea.Cmd
-		tf, cmd := (*(r.input)).Update(msg)
-		r.input = &tf
-		if r.checker != nil && !r.checker(r.input.Value()) {
-			r.input.Prompt = ngMark
-		} else {
-			r.input.Prompt = okMark
-		}
-		return r, cmd
+	if !r.editing {
+		return r, nil
 	}
-	return r, nil
+
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		if msg.String() == "enter" {
+			return r, finishEditCmd
+		}
+	}
+
+	tf, cmd := (*(r.input)).Update(msg)
+	r.input = &tf
+	if r.checker != nil && !r.checker(r.input.Value()) {
+		r.input.Prompt = ngMark
+	} else {
+		r.input.Prompt = okMark
+	}
+	return r, cmd
 }
 
 func (r TextInputRow) View() string {

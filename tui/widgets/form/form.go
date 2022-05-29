@@ -1,4 +1,4 @@
-package widgets
+package form
 
 import (
 	"strings"
@@ -8,21 +8,23 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-//type formRow interface {
-//	TextInputRow | SelectorRow
-//	Init() tea.Cmd
-//	Update(msg tea.Msg) (any, tea.Cmd)
-//	View() string
-//	Focus() any
-//	UnFocus() any
-//}
+type finishEditMsg struct{}
 
-//type SelectorRow struct {
-//	label      string
-//	value      string
-//	showWidget bool
-//	//picker     Selector
-//}
+func finishEditCmd() tea.Msg {
+	return finishEditMsg{}
+}
+
+type FormRow interface {
+	TextInputRow | SelectorRow
+	Focus() any
+	UnFocus() any
+	isEditing() bool
+	Type() string
+
+	Init() tea.Cmd
+	Update(msg tea.Msg) (any, tea.Cmd)
+	View() string
+}
 
 var (
 	normalStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("100")).PaddingRight(3)
@@ -31,43 +33,48 @@ var (
 	ngMark        = lipgloss.NewStyle().Foreground(lipgloss.Color("196")).Render("✘ ")
 )
 
-type Form struct {
-	rows     []TextInputRow
+type Form[T FormRow] struct {
+	rows     []T
 	cursor   int
 	focusing bool
 }
 
-func NewForm(rows []TextInputRow) Form {
-	return Form{
+func NewForm[T FormRow](rows []T) Form[T] {
+	return Form[T]{
 		rows: rows,
 	}
 }
 
-func (f Form) Init() tea.Cmd {
-	var cmds []tea.Cmd
-	for _, r := range f.rows {
-		cmd := r.Init()
-		cmds = append(cmds, cmd)
-	}
-	return tea.Batch(cmds...)
+func (f Form[T]) Init() tea.Cmd {
+	//var cmds []tea.Cmd
+	//for _, r := range f.rows {
+	//	cmd := r.Init()
+	//	cmds = append(cmds, cmd)
+	//}
+	//return tea.Batch(cmds...)
+	return nil
 }
 
-func (f Form) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (f Form[T]) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case finishEditMsg:
+		f.focusing = false
+		r := f.rows[f.cursor].UnFocus()
+		f.rows[f.cursor] = r.(T)
+		return f, nil
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "esc", "ctrl+c":
 			return f, tea.Quit
 		case "enter":
 			if f.focusing {
-				f.focusing = false
-				r := f.rows[f.cursor].UnFocus()
-				f.rows[f.cursor] = r.(TextInputRow)
-				return f, nil
+				r, cmd := f.rows[f.cursor].Update(msg)
+				f.rows[f.cursor] = r.(T)
+				return f, cmd
 			}
 			f.focusing = true
 			r := f.rows[f.cursor].Focus()
-			f.rows[f.cursor] = r.(TextInputRow)
+			f.rows[f.cursor] = r.(T)
 		case "up":
 			if !f.focusing {
 				f.cursor--
@@ -85,7 +92,7 @@ func (f Form) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		default:
 			if f.focusing {
 				r, cmd := f.rows[f.cursor].Update(msg)
-				f.rows[f.cursor] = r.(TextInputRow)
+				f.rows[f.cursor] = r.(T)
 				return f, cmd
 			}
 		}
@@ -93,13 +100,13 @@ func (f Form) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return f, nil
 }
 
-func (f Form) View() string {
+func (f Form[T]) View() string {
 	var doc strings.Builder
 
 	for i, row := range f.rows {
 		var line string
 		if f.cursor == i {
-			if row.editing {
+			if row.isEditing() {
 				line = row.View()
 			} else {
 				line = selectedStyle.Render(row.View())
