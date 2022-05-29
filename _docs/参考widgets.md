@@ -17,6 +17,7 @@
 
 ## [erikgeiser/promptkit](https://github.com/erikgeiser/promptkit)
 
+- `✘` `✔`
 - Text Input
 
 ## [knipferrc/teacup](https://github.com/knipferrc/teacup)
