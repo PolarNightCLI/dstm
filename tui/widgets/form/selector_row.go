@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/mattn/go-runewidth"
 )
 
 type SelectorRow struct {
@@ -66,7 +67,9 @@ func (s SelectorRow) Update(msg tea.Msg) (any, tea.Cmd) {
 
 func (s SelectorRow) View() string {
 	var doc strings.Builder
-	doc.WriteString(s.label + "   ")
+	l := runewidth.StringWidth(s.label)
+	ss := strings.Repeat(" ", 12-l)
+	doc.WriteString(s.label + ss)
 	if !s.editing {
 		doc.WriteString(s.value)
 		return doc.String()

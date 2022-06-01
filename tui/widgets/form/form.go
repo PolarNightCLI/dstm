@@ -33,19 +33,19 @@ var (
 	ngMark        = lipgloss.NewStyle().Foreground(lipgloss.Color("196")).Render("✘ ")
 )
 
-type Form[T FormRow] struct {
-	rows     []T
+type Form struct {
+	rows     []any
 	cursor   int
 	focusing bool
 }
 
-func NewForm[T FormRow](rows []T) Form[T] {
-	return Form[T]{
+func NewForm(rows []any) Form {
+	return Form{
 		rows: rows,
 	}
 }
 
-func (f Form[T]) Init() tea.Cmd {
+func (f Form) Init() tea.Cmd {
 	//var cmds []tea.Cmd
 	//for _, r := range f.rows {
 	//	cmd := r.Init()
@@ -55,12 +55,17 @@ func (f Form[T]) Init() tea.Cmd {
 	return nil
 }
 
-func (f Form[T]) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (f Form) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case finishEditMsg:
 		f.focusing = false
-		r := f.rows[f.cursor].UnFocus()
-		f.rows[f.cursor] = r.(T)
+		row := f.rows[f.cursor]
+		switch row.(type) {
+		case TextInputRow:
+			f.rows[f.cursor] = row.(TextInputRow).UnFocus()
+		case SelectorRow:
+			f.rows[f.cursor] = row.(SelectorRow).UnFocus()
+		}
 		return f, nil
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -68,13 +73,24 @@ func (f Form[T]) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return f, tea.Quit
 		case "enter":
 			if f.focusing {
-				r, cmd := f.rows[f.cursor].Update(msg)
-				f.rows[f.cursor] = r.(T)
+				var cmd tea.Cmd
+				row := f.rows[f.cursor]
+				switch row.(type) {
+				case TextInputRow:
+					f.rows[f.cursor], cmd = row.(TextInputRow).Update(msg)
+				case SelectorRow:
+					f.rows[f.cursor], cmd = row.(SelectorRow).Update(msg)
+				}
 				return f, cmd
 			}
 			f.focusing = true
-			r := f.rows[f.cursor].Focus()
-			f.rows[f.cursor] = r.(T)
+			row := f.rows[f.cursor]
+			switch row.(type) {
+			case TextInputRow:
+				f.rows[f.cursor] = row.(TextInputRow).Focus()
+			case SelectorRow:
+				f.rows[f.cursor] = row.(SelectorRow).Focus()
+			}
 		case "up":
 			if !f.focusing {
 				f.cursor--
@@ -91,8 +107,14 @@ func (f Form[T]) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		default:
 			if f.focusing {
-				r, cmd := f.rows[f.cursor].Update(msg)
-				f.rows[f.cursor] = r.(T)
+				var cmd tea.Cmd
+				row := f.rows[f.cursor]
+				switch row.(type) {
+				case TextInputRow:
+					f.rows[f.cursor], cmd = row.(TextInputRow).Update(msg)
+				case SelectorRow:
+					f.rows[f.cursor], cmd = row.(SelectorRow).Update(msg)
+				}
 				return f, cmd
 			}
 		}
@@ -100,20 +122,36 @@ func (f Form[T]) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return f, nil
 }
 
-func (f Form[T]) View() string {
+func (f Form) View() string {
 	var doc strings.Builder
 
 	for i, row := range f.rows {
 		var line string
-		if f.cursor == i {
-			if row.isEditing() {
-				line = row.View()
+		switch row.(type) {
+		case TextInputRow:
+			r := row.(TextInputRow)
+			if f.cursor == i {
+				if r.isEditing() {
+					line = r.View()
+				} else {
+					line = selectedStyle.Render(r.View())
+				}
 			} else {
-				line = selectedStyle.Render(row.View())
+				line = normalStyle.Render(r.View())
 			}
-		} else {
-			line = normalStyle.Render(row.View())
+		case SelectorRow:
+			r := row.(SelectorRow)
+			if f.cursor == i {
+				if r.isEditing() {
+					line = r.View()
+				} else {
+					line = selectedStyle.Render(r.View())
+				}
+			} else {
+				line = normalStyle.Render(r.View())
+			}
 		}
+
 		doc.WriteString(line)
 		doc.WriteString("\n")
 	}

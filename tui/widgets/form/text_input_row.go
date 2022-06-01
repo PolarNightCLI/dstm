@@ -5,6 +5,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/mattn/go-runewidth"
 )
 
 type TextInputRow struct {
@@ -87,7 +88,9 @@ func (r TextInputRow) Update(msg tea.Msg) (any, tea.Cmd) {
 
 func (r TextInputRow) View() string {
 	var doc strings.Builder
-	doc.WriteString(r.label + "   ")
+	l := runewidth.StringWidth(r.label)
+	s := strings.Repeat(" ", 12-l)
+	doc.WriteString(r.label + s)
 	if !r.editing {
 		doc.WriteString(r.value)
 		return doc.String()
